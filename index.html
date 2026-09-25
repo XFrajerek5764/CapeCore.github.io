@@ -1,0 +1,1269 @@
+html
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CapeCore — Custom Capes for Minecraft</title>
+  <meta name="description" content="CapeCore — open-source mod Fabric 1.21.4 pozwalający dodawać własne pelerynki bez restartu Minecrafta i bez konta Premium.">
+
+  <style>
+    :root {
+      --bg: #090b10;
+      --panel: #10141c;
+      --panel-2: #151a24;
+      --border: #252c39;
+      --text: #f4f7fb;
+      --muted: #9da7b8;
+      --accent: #7c5cff;
+      --accent-2: #a98fff;
+      --green: #42d392;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(124, 92, 255, .22), transparent 38%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(1100px, calc(100% - 36px));
+      margin: auto;
+    }
+
+    /* =========================
+       NAV
+       ========================= */
+
+    nav {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(9,11,16,.82);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-weight: 800;
+      letter-spacing: -.4px;
+    }
+
+    .logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), #4c38d6);
+      box-shadow: 0 8px 30px rgba(124,92,255,.28);
+      font-weight: 900;
+      transition: .35s cubic-bezier(.2,.8,.2,1);
+    }
+
+    .brand:hover .logo {
+      transform: rotate(-8deg) scale(1.1);
+      box-shadow:
+        0 0 20px rgba(124,92,255,.55),
+        0 10px 35px rgba(124,92,255,.3);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      padding: 9px 13px;
+      border-radius: 9px;
+      font-size: 14px;
+      transition: .25s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      background: rgba(255,255,255,.06);
+      transform: translateY(-2px);
+    }
+
+    /* =========================
+       HERO + SNOW
+       ========================= */
+
+    .hero {
+      min-height: 680px;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      z-index: -3;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(124,92,255,.15), transparent 35%),
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.035), transparent 25%),
+        radial-gradient(circle at 80% 70%, rgba(124,92,255,.08), transparent 30%);
+      filter: blur(20px);
+      animation: heroGlow 7s ease-in-out infinite alternate;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(255,255,255,.025),
+          transparent 30%,
+          transparent 70%,
+          rgba(124,92,255,.035)
+        );
+      backdrop-filter: blur(.4px);
+    }
+
+    .hero.paused::before {
+      animation-play-state: paused;
+    }
+
+    @keyframes heroGlow {
+      0% {
+        transform: scale(1) translate3d(-1%, -1%, 0);
+      }
+
+      100% {
+        transform: scale(1.08) translate3d(1%, 1%, 0);
+      }
+    }
+
+    #snowCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+      opacity: .78;
+      filter: blur(.15px);
+    }
+
+    .hero-inner {
+      width: 100%;
+      max-width: 850px;
+      margin: auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: #c9c2ff;
+      background: rgba(124,92,255,.08);
+      font-size: 13px;
+      margin-bottom: 24px;
+      animation: heroEnter .8s cubic-bezier(.16,1,.3,1) both;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      transform: translateZ(0);
+      transition:
+        transform .45s cubic-bezier(.16,1,.3,1),
+        border-color .35s,
+        box-shadow .45s,
+        background .35s,
+        filter .35s;
+    }
+
+    .badge::before {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(.3);
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        rgba(124,92,255,.20),
+        rgba(124,92,255,.06) 35%,
+        transparent 70%
+      );
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        transform .55s cubic-bezier(.16,1,.3,1),
+        opacity .45s;
+    }
+
+    .badge::after {
+      content: "";
+      position: absolute;
+      top: -80%;
+      left: -30%;
+      width: 35%;
+      height: 260%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.10),
+        transparent
+      );
+      transform: rotate(18deg) translateX(-180%);
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .badge:hover {
+      transform:
+        translateY(-10px)
+        scale(1.018)
+        rotateX(1deg);
+
+      border-color: rgba(124,92,255,.75);
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(124,92,255,.10),
+          rgba(124,92,255,.08) 55%
+        );
+
+      box-shadow:
+        0 25px 60px rgba(0,0,0,.38),
+        0 0 0 1px rgba(124,92,255,.08),
+        0 0 35px rgba(124,92,255,.18);
+
+      filter: brightness(1.08);
+    }
+
+    .badge:hover::before {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .badge:hover::after {
+      opacity: 1;
+      animation: badgeShine .7s cubic-bezier(.16,1,.3,1);
+    }
+
+    @keyframes badgeShine {
+      from {
+        transform: rotate(18deg) translateX(-180%);
+      }
+
+      to {
+        transform: rotate(18deg) translateX(500%);
+      }
+    }
+
+    .badge span {
+      width: 7px;
+      height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--green);
+      animation: pulseDot 1.8s ease-in-out infinite;
+      position: relative;
+      z-index: 2;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 8px var(--green);
+      }
+
+      50% {
+        transform: scale(1.35);
+        box-shadow: 0 0 20px var(--green);
+      }
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(52px, 9vw, 92px);
+      line-height: .95;
+      letter-spacing: -5px;
+      animation: heroTitle .95s cubic-bezier(.16,1,.3,1) both;
+    }
+
+    .gradient {
+      background: linear-gradient(
+        100deg,
+        #fff,
+        #b9a9ff 45%,
+        #8063ff,
+        #d8d0ff
+      );
+      background-size: 250% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation:
+        gradientMove 5s ease-in-out infinite,
+        gradientGlow 2.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes gradientMove {
+      0%, 100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    @keyframes gradientGlow {
+      from {
+        filter: drop-shadow(0 0 0 rgba(124,92,255,0));
+      }
+
+      to {
+        filter: drop-shadow(0 0 18px rgba(124,92,255,.25));
+      }
+    }
+
+    .hero p {
+      max-width: 700px;
+      margin: 28px auto 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.7;
+      animation: heroEnter .9s .12s cubic-bezier(.16,1,.3,1) both;
+    }
+
+    .buttons {
+      margin-top: 34px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      animation: heroEnter 1s .2s cubic-bezier(.16,1,.3,1) both;
+    }
+
+    @keyframes heroEnter {
+      from {
+        opacity: 0;
+        transform: translateY(24px) scale(.97);
+        filter: blur(7px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes heroTitle {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(.94);
+        filter: blur(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-width: 150px;
+      padding: 13px 19px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 14px;
+      transition:
+        transform .25s cubic-bezier(.16,1,.3,1),
+        border-color .25s,
+        box-shadow .25s,
+        background .25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .button::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 80%;
+      height: 100%;
+      background: linear-gradient(
+        100deg,
+        transparent,
+        rgba(255,255,255,.18),
+        transparent
+      );
+      transform: skewX(-20deg);
+      transition: left .55s;
+    }
+
+    .button:hover::before {
+      left: 140%;
+    }
+
+    .button:hover {
+      transform: translateY(-5px) scale(1.035);
+      border-color: #555f73;
+    }
+
+    .download {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 12px 35px rgba(124,92,255,.28);
+    }
+
+    .download:hover {
+      background: #6d4df1;
+      box-shadow:
+        0 15px 45px rgba(124,92,255,.48),
+        0 0 25px rgba(124,92,255,.25);
+    }
+
+    .github {
+      background: var(--panel);
+    }
+
+    .github:hover {
+      box-shadow:
+        0 15px 35px rgba(0,0,0,.3),
+        0 0 20px rgba(255,255,255,.05);
+    }
+
+    /* NAPRAWIONA IKONA GITHUB */
+    .github svg {
+      width: 19px;
+      height: 19px;
+      flex: 0 0 19px;
+      display: block;
+      fill: currentColor;
+      color: currentColor;
+      position: relative;
+      z-index: 2;
+      transition: transform .3s;
+    }
+
+    .github:hover svg {
+      transform: rotate(-8deg) scale(1.12);
+    }
+
+    .github {
+      position: relative;
+      z-index: 1;
+    }
+
+    .github > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* =========================
+       SECTIONS
+       ========================= */
+
+    section {
+      padding: 90px 0;
+    }
+
+    .section-title {
+      font-size: 31px;
+      letter-spacing: -1px;
+      margin: 0 0 10px;
+    }
+
+    .section-subtitle {
+      color: var(--muted);
+      margin: 0 0 30px;
+      line-height: 1.6;
+    }
+
+    /* =========================
+       FEATURE CARDS
+       ========================= */
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .card {
+      padding: 23px;
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      transition:
+        transform .4s cubic-bezier(.16,1,.3,1),
+        border-color .35s,
+        box-shadow .4s,
+        background .4s;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -100%;
+      background: radial-gradient(
+        circle,
+        rgba(124,92,255,.16),
+        transparent 35%
+      );
+      opacity: 0;
+      transition: opacity .4s, transform .6s;
+      pointer-events: none;
+    }
+
+    .card:hover {
+      transform: translateY(-9px) scale(1.025);
+      border-color: rgba(124,92,255,.55);
+      box-shadow:
+        0 20px 50px rgba(0,0,0,.28),
+        0 0 25px rgba(124,92,255,.10);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+      transform: translate(25%, 25%);
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(124,92,255,.13);
+      margin-bottom: 17px;
+      font-size: 19px;
+      transition:
+        transform .4s cubic-bezier(.16,1,.3,1),
+        box-shadow .4s;
+    }
+
+    .card:hover .card-icon {
+      transform: rotate(-7deg) scale(1.15);
+      box-shadow: 0 0 20px rgba(124,92,255,.25);
+    }
+
+    .card h3 {
+      margin: 0 0 9px;
+      font-size: 17px;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    /* =========================
+       CHANGELOG
+       ========================= */
+
+    .changelog {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .version {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      transform: translateZ(0);
+      transition:
+        transform .45s cubic-bezier(.16,1,.3,1),
+        border-color .35s,
+        box-shadow .45s,
+        background .35s,
+        filter .35s;
+    }
+
+    .version::before {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(.3);
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        rgba(124,92,255,.20),
+        rgba(124,92,255,.06) 35%,
+        transparent 70%
+      );
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        transform .55s cubic-bezier(.16,1,.3,1),
+        opacity .45s;
+    }
+
+    .version::after {
+      content: "";
+      position: absolute;
+      top: -80%;
+      left: -30%;
+      width: 35%;
+      height: 260%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.10),
+        transparent
+      );
+      transform: rotate(18deg) translateX(-180%);
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .version:hover {
+      transform:
+        translateY(-10px)
+        scale(1.018)
+        rotateX(1deg);
+
+      border-color: rgba(124,92,255,.75);
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(124,92,255,.10),
+          var(--panel) 55%
+        );
+
+      box-shadow:
+        0 25px 60px rgba(0,0,0,.38),
+        0 0 0 1px rgba(124,92,255,.08),
+        0 0 35px rgba(124,92,255,.18);
+
+      filter: brightness(1.08);
+    }
+
+    .version:hover::before {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .version:hover::after {
+      opacity: 1;
+      animation: cardShine .7s cubic-bezier(.16,1,.3,1);
+    }
+
+    @keyframes cardShine {
+      from {
+        transform: rotate(18deg) translateX(-180%);
+      }
+
+      to {
+        transform: rotate(18deg) translateX(500%);
+      }
+    }
+
+    .version-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .version h3 {
+      margin: 0;
+      font-size: 18px;
+      transition:
+        transform .35s,
+        color .35s;
+    }
+
+    .version:hover h3 {
+      transform: translateX(5px);
+      color: #cfc5ff;
+    }
+
+    .date {
+      color: #737d8f;
+      font-size: 12px;
+      transition: color .35s;
+    }
+
+    .version:hover .date {
+      color: #aaa0d8;
+    }
+
+    .changes {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.8;
+      position: relative;
+      z-index: 2;
+    }
+
+    .changes li {
+      transition:
+        transform .3s,
+        color .3s;
+    }
+
+    .version:hover .changes li {
+      color: #c4cad6;
+      transform: translateX(4px);
+    }
+
+    .changes li::marker {
+      color: var(--accent-2);
+    }
+
+    /* =========================
+       OPEN SOURCE
+       ========================= */
+
+    .opensource {
+      text-align: center;
+      padding: 70px 20px;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(124,92,255,.13),
+          rgba(124,92,255,.02)
+        );
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      transition:
+        transform .45s,
+        box-shadow .45s,
+        border-color .35s;
+    }
+
+    .opensource:hover {
+      transform: translateY(-5px);
+      border-color: rgba(124,92,255,.45);
+      box-shadow:
+        0 25px 60px rgba(0,0,0,.25),
+        0 0 30px rgba(124,92,255,.10);
+    }
+
+    .opensource p {
+      color: var(--muted);
+      max-width: 650px;
+      margin: 12px auto 24px;
+      line-height: 1.6;
+    }
+
+    /* =========================
+       FOOTER
+       ========================= */
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 25px 0;
+      color: #697384;
+      font-size: 13px;
+    }
+
+    footer .container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    /* =========================
+       RESPONSIVE
+       ========================= */
+
+    @media (max-width: 760px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-links a:nth-child(2) {
+        display: none;
+      }
+
+      h1 {
+        letter-spacing: -3px;
+      }
+
+      .hero {
+        min-height: 600px;
+      }
+
+      footer .container {
+        flex-direction: column;
+      }
+    }
+
+    /* =========================
+       REDUCED MOTION
+       ========================= */
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+
+      #snowCanvas {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+      <a href="#home" class="brand">
+        <div class="logo">C</div>
+        <span>CapeCore</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#features">Features</a>
+        <a href="#changelog">Changelog</a>
+        <a href="https://github.com/XFrajerek5764/CapeCore-File/" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <section class="hero" id="home">
+
+      <canvas id="snowCanvas"></canvas>
+
+      <div class="container hero-inner">
+
+        <div class="badge">
+          <span></span>
+          Currently available for Fabric 1.21.4
+        </div>
+
+        <h1>
+          Your cape.<br>
+          <span class="gradient">Your style.</span>
+        </h1>
+
+        <p>
+          CapeCore to open-source'owy mod na Fabric 1.21.4,
+          który pozwala dodawać własne customowe pelerynki
+          bez restartowania Minecrafta i bez konta Premium.
+        </p>
+
+        <div class="buttons">
+
+          <a class="button download" href="downloads/CapeCore-1.0.jar" download>
+            ↓&nbsp; Pobierz CapeCore
+          </a>
+
+          <a class="button github" href="https://github.com/XFrajerek5764/CapeCore-File/" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.42-4.04-1.42-.55-1.4-1.34-1.77-1.34-1.77-1.09-.75.08-.74.08-.74 1.2.09 1.84 1.23 1.84 1.23 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.23-3.22-.12-.3-.53-1.52.12-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.13 3.18.76.84 1.22 1.91 1.22 3.22 0 4.62-2.8 5.64-5.48 5.94.43.37.82 1.1.82 2.22v3.29c0 .32.22.69.83.57A12 12 0 0 0 12 .5Z"/>
+            </svg>
+            GitHub
+          </a>
+
+        </div>
+
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+
+        <h2 class="section-title">Co oferuje CapeCore?</h2>
+
+        <p class="section-subtitle">
+          Prosty mod skupiony na customowych pelerynkach.
+        </p>
+
+        <div class="cards">
+
+          <div class="card">
+            <div class="card-icon">🧥</div>
+            <h3>Customowe pelerynki</h3>
+            <p>
+              Dodawaj własne pelerynki w formacie CapeCore oraz
+              w standardowym formacie używanym przez Minecraft.
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">⚡</div>
+            <h3>Bez restartu</h3>
+            <p>
+              Wgrana pelerynka może zostać zmieniona od razu,
+              bez restartowania gry i bez ponownego uruchamiania konta.
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">🔓</div>
+            <h3>Bez Premium</h3>
+            <p>
+              CapeCore nie wymaga posiadania konta Minecraft Premium,
+              aby korzystać z własnych pelerynek.
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">🌊</div>
+            <h3>WaveyCapes</h3>
+            <p>
+              Projekt jest tworzony z myślą o współpracy z WaveyCapes
+              i płynnym renderowaniu pelerynek.
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">💾</div>
+            <h3>Zapisywanie</h3>
+            <p>
+              Dodane pelerynki są zapisywane, dzięki czemu możesz
+              wybrać je ponownie bez ponownego wgrywania pliku.
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">🔓</div>
+            <h3>Open Source</h3>
+            <p>
+              Kod źródłowy projektu jest publiczny i dostępny
+              dla każdego na GitHubie.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section id="changelog">
+      <div class="container">
+
+        <h2 class="section-title">Changelog</h2>
+
+        <p class="section-subtitle">
+          Najnowsze zmiany w CapeCore.
+        </p>
+
+        <div class="changelog">
+
+          <article class="version">
+
+            <div class="version-header">
+              <h3>1.1</h3>
+              <span class="date">25.09.2026</span>
+            </div>
+
+            <ul class="changes">
+              <li>Wypuściliśmy Strone CapeCore.</li>
+              <li>Zapowiadamy Możliwość powstania discorda CapeCore.</li>
+            </ul>
+
+          </article>
+
+          <article class="version">
+
+            <div class="version-header">
+              <h3>1.0</h3>
+              <span class="date">25.09.2026</span>
+            </div>
+
+            <ul class="changes">
+              <li>Pierwsze wydanie CapeCore.</li>
+              <li>Dodano obsługę customowych pelerynek.</li>
+              <li>Dodano obsługę standardowych pelerynek Minecraft.</li>
+            </ul>
+
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <section>
+
+      <div class="container">
+
+        <div class="opensource">
+
+          <h2 class="section-title">
+            Open source. Community driven.
+          </h2>
+
+          <p>
+            CapeCore jest projektem open source tworzonym przez
+            XFrajerek5764. Kod projektu jest dostępny publicznie,
+            dzięki czemu każdy może go przejrzeć i śledzić rozwój moda.
+          </p>
+
+          <div class="buttons">
+
+            <a class="button github" href="https://github.com/XFrajerek5764/CapeCore-File/" target="_blank" rel="noopener">
+
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.42-4.04-1.42-.55-1.4-1.34-1.77-1.34-1.77-1.09-.75.08-.74.08-.74 1.2.09 1.84 1.23 1.84 1.23 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.23-3.22-.12-.3-.53-1.52.12-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.13 3.18.76.84 1.22 1.91 1.22 3.22 0 4.62-2.8 5.64-5.48 5.94.43.37.82 1.1.82 2.22v3.29c0 .32.22.69.83.57A12 12 0 0 0 12 .5Z"/>
+              </svg>
+
+              Zobacz kod na GitHub
+
+            </a>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer>
+
+    <div class="container">
+
+      <span>
+        © 2026 CapeCore — XFrajerek5764
+      </span>
+
+      <span>
+        Fabric 1.21.4 · Open Source
+      </span>
+
+    </div>
+
+  </footer>
+
+  <script>
+    const hero = document.getElementById("home");
+    const canvas = document.getElementById("snowCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let width = 0;
+    let height = 0;
+    let animationId = null;
+    let snowflakes = [];
+
+    const SNOW_COUNT = 90;
+
+    function resizeSnow() {
+      const rect = hero.getBoundingClientRect();
+
+      width = rect.width;
+      height = rect.height;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      createSnow();
+    }
+
+    function createSnow() {
+      snowflakes = [];
+
+      for (let i = 0; i < SNOW_COUNT; i++) {
+        snowflakes.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          radius: Math.random() * 2.4 + .7,
+          speed: Math.random() * .65 + .35,
+          drift: Math.random() * 1.1 - .55,
+          opacity: Math.random() * .55 + .25,
+          phase: Math.random() * Math.PI * 2,
+          phaseSpeed: Math.random() * .015 + .006
+        });
+      }
+    }
+
+    function drawSnow() {
+      ctx.clearRect(0, 0, width, height);
+
+      for (const flake of snowflakes) {
+
+        flake.phase += flake.phaseSpeed;
+
+        flake.y += flake.speed;
+        flake.x += Math.sin(flake.phase) * flake.drift;
+
+        if (flake.y > height + 10) {
+          flake.y = -10;
+          flake.x = Math.random() * width;
+        }
+
+        if (flake.x > width + 10) {
+          flake.x = -10;
+        }
+
+        if (flake.x < -10) {
+          flake.x = width + 10;
+        }
+
+        ctx.beginPath();
+
+        ctx.fillStyle =
+          `rgba(255,255,255,${flake.opacity})`;
+
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "rgba(255,255,255,.35)";
+
+        ctx.arc(
+          flake.x,
+          flake.y,
+          flake.radius,
+          0,
+          Math.PI * 2
+        );
+
+        ctx.fill();
+      }
+
+      ctx.shadowBlur = 0;
+
+      animationId = requestAnimationFrame(drawSnow);
+    }
+
+    function startSnow() {
+      if (animationId !== null) return;
+
+      hero.classList.remove("paused");
+
+      drawSnow();
+    }
+
+    function stopSnow() {
+      hero.classList.add("paused");
+
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+    }
+
+    const heroObserver = new IntersectionObserver(
+      entries => {
+
+        const entry = entries[0];
+
+        if (entry.isIntersecting) {
+          startSnow();
+        } else {
+          stopSnow();
+        }
+
+      },
+      {
+        threshold: 0.08
+      }
+    );
+
+    heroObserver.observe(hero);
+
+    window.addEventListener(
+      "resize",
+      resizeSnow,
+      { passive: true }
+    );
+
+    resizeSnow();
+
+    document.addEventListener("visibilitychange", () => {
+
+      if (document.hidden) {
+        stopSnow();
+      } else {
+
+        const rect = hero.getBoundingClientRect();
+
+        const visible =
+          rect.bottom > 0 &&
+          rect.top < window.innerHeight;
+
+        if (visible) {
+          startSnow();
+        }
+
+      }
+
+    });
+  </script>
+
+</body>
+</html>
